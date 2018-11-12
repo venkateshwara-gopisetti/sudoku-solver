@@ -6,18 +6,21 @@ with open('D:\git\sudoku-solver\sudoku.txt','r') as f:
 def parse_sud(fe):
     return([[int(x) for x in y.split(',')]for y in fe.split(',\n') ])
 
+def unlist_sud(fe):
+    return([x for y in fe for x in y])
+
 #arr = [7,2,6,4,9,3,8,1,5,3,1,5,7,2,8,9,4,6,4,8,9,6,5,1,2,3,7,8,5,2,1,4,7,6,9,3,6,7,3,9,
 #     8,5,1,2,4,9,4,1,3,6,2,7,5,8,1,9,4,8,3,6,5,7,2,5,6,7,2,1,4,3,8,9,2,3,8,5,7,9,4,6,1]
 
 #fg = ['_','_',6,4,9,3,8,1,5,'_','_',5,7,2,8,9,4,6,4,8,9,6,5,1,2,3,7,8,5,2,1,4,7,6,9,3,6,7,3,9,
 #     8,5,1,2,4,9,4,1,3,6,2,7,5,8,1,9,4,8,3,6,5,7,2,5,6,7,2,1,4,3,8,9,2,3,8,5,7,9,4,6,1]
 
-rc = int(len(fg)**0.5)
-fcr = int(rc**0.5)
-
 #arr = ['_' if x%10==0 else fg[x] for x in range(len(fg))]
 
-#arr = fg
+arr = unlist_sud(parse_sud(arr))
+
+rc = int(len(arr)**0.5)
+fcr = int(rc**0.5)
 
 def block_cont(dr,n):
     return([x[0] for x in dr if x[3]==n])
@@ -31,32 +34,35 @@ def row_cont(dr,n):
 def calc(x):
     return(rc*x[1]+x[2])
 
-def solve_block(dor,miss):
+def min_miss(dor):
+    miss = calc_miss(dor)
+    return(min([y for x in miss.values() for y in list(x.values())if y >0]))
+
+def solver_one(dor):
+    miss = calc_miss(dor)
     aa = [x for x in miss['block'].keys() if miss['block'][x]==1]
     for ii in aa:
         temp = [x[0] for x in dor if x[3] == ii]
-        dor[calc([x for x in dor if x[3] == ii and '_' in x][0])][0]=list(set(comb).difference(set(temp)))[0]
-    return(dor)
-
-def solve_col(dor,miss):
+        dor[calc([x for x in dor if x[3] == ii and 0 in x][0])][0]=list(set(comb).difference(set(temp)))[0]
+    miss = calc_miss(dor)
     aa = [x for x in miss['col'].keys() if miss['col'][x]==1]
     for ii in aa:
         temp = [x[0] for x in dor if x[2] == ii]
-        dor[calc([x for x in dor if x[2] == ii and '_' in x][0])][0]=list(set(comb).difference(set(temp)))[0]
-    return(dor)
-
-def solve_row(dor,miss):
+        dor[calc([x for x in dor if x[2] == ii and 0 in x][0])][0]=list(set(comb).difference(set(temp)))[0]
     aa = [x for x in miss['row'].keys() if miss['row'][x]==1]
     for ii in aa:
         temp = [x[0] for x in dor if x[1] == ii]
-        dor[calc([x for x in dor if x[1] == ii and '_' in x][0])][0]=list(set(comb).difference(set(temp)))[0]
+        dor[calc([x for x in dor if x[1] == ii and 0 in x][0])][0]=list(set(comb).difference(set(temp)))[0]
     return(dor)
+
+def solver_two(dor,miss):
+
 
 def calc_miss(d):
    miss = {}
-   miss['block'] = {i:block_cont(d,i).count('_') for i in range(int(len(arr)**0.5))}
-   miss['row'] = {i:row_cont(d,i).count('_') for i in range(int(len(arr)**0.5))}
-   miss['col'] = {i:col_cont(d,i).count('_') for i in range(int(len(arr)**0.5))}
+   miss['block'] = {i:block_cont(d,i).count(0) for i in range(int(len(arr)**0.5))}
+   miss['row'] = {i:row_cont(d,i).count(0) for i in range(int(len(arr)**0.5))}
+   miss['col'] = {i:col_cont(d,i).count(0) for i in range(int(len(arr)**0.5))}
    return(miss)
 
 ord2 = [[arr[x],x//rc,x%rc,fcr*(x//rc//fcr)+x%rc//fcr] for x in range(len(arr))]
@@ -71,13 +77,8 @@ def update(dor,miss,i = [0]):
     i[0] += 1
     print(i[0])
     miss_stack.append([[g[0] for g in dor],miss,i[0]])
-    dor = solve_block(dor,miss)
-    miss_stack.append([[g[0] for g in dor],miss,i[0]])
-    miss = calc_miss(dor)
-    dor = solve_col(dor,miss)
-    miss_stack.append([[g[0] for g in dor],miss,i[0]])
-    miss = calc_miss(dor)
-    dor = solve_row(dor,miss)
+    if min_miss(dor) == 1:
+        dor = solver_one(dor)
     miss_stack.append([[g[0] for g in dor],miss,i[0]])
     miss = calc_miss(dor)
     if list(miss['block'].values()).count(0) == rc:
